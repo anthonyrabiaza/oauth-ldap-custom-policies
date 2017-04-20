@@ -1,0 +1,55 @@
+<policy xmlns="http://www.mulesoft.org/schema/mule/policy"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xmlns:spring="http://www.springframework.org/schema/beans"
+        xmlns:mule="http://www.mulesoft.org/schema/mule/core"
+        xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
+        xmlns:mule-ss="http://www.mulesoft.org/schema/mule/spring-security"
+        xmlns:ss="http://www.springframework.org/schema/security"
+        xmlns:scripting="http://www.mulesoft.org/schema/mule/scripting"
+        xmlns:api-platform-gw="http://www.mulesoft.org/schema/mule/api-platform-gw"
+        xsi:schemaLocation="http://www.mulesoft.org/schema/mule/policy http://www.mulesoft.org/schema/mule/policy/current/mule-policy.xsd
+              http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-current.xsd
+              http://www.mulesoft.org/schema/mule/spring-security http://www.mulesoft.org/schema/mule/spring-security/current/mule-spring-security.xsd
+              http://www.springframework.org/schema/security http://www.springframework.org/schema/security/spring-security-current.xsd
+              http://www.mulesoft.org/schema/mule/api-platform-gw http://www.mulesoft.org/schema/mule/api-platform-gw/current/mule-api-platform-gw.xsd
+              http://www.mulesoft.org/schema/mule/scripting http://www.mulesoft.org/schema/mule/scripting/current/mule-scripting.xsd
+              http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd">
+     <!-- This section is for building response messages when the signature validation fails. -->
+    <mule:processor-chain name="nonAuthorized">
+        <mule:set-property propertyName="http.status" value="{{authCode}}"/> <!-- Set HTTP status code to {{errCode}} -->
+        <mule:set-property propertyName="Content-Type" value="application/json"/>
+        <mule:set-payload value="{&quot;code&quot; : &quot;{{authCode}}&quot;, &quot;msg&quot; : &quot;{{authMsg}}&quot;}"/> <!-- Set the payload to the description of the violation -->
+    </mule:processor-chain>
+
+
+    <!-- This is the element that gets injected at the beginning of every flow. According to the pointcut specified below. -->
+    <before>
+
+      <mule:enricher target="flowVars['response']">
+        <mule:processor-chain>
+          <mule:set-variable variableName="principal" value="#[message.outboundProperties['X-AGW-username']]" doc:name="Variable"/>
+          <mule:set-variable variableName="pin" value="#[message.inboundProperties['X-PIN'] != null ?  message.inboundProperties['X-PIN'] : '######']" doc:name="Variable"/>
+          <mule:set-variable variableName="endpoint" value="{{pin_check_url}}" doc:name="Variable"/>
+          <scripting:component doc:name="Groovy">
+              <scripting:script engine="Groovy"><![CDATA[
+import java.net.URLEncoder
+String text = new URL(message.getInvocationProperty('endpoint')+'?principal='+URLEncoder.encode(message.getInvocationProperty('principal'),'UTF-8')+'&pin='+URLEncoder.encode(message.getInvocationProperty('pin'),'UTF-8')).text;
+return text;
+  ]]></scripting:script>
+          </scripting:component>
+
+        </mule:processor-chain>
+      </mule:enricher>
+
+
+        <mule:message-filter xmlns:mule="http://www.mulesoft.org/schema/mule/core" onUnaccepted="nonAuthorized">
+  			<mule:expression-filter xmlns:mule="http://www.mulesoft.org/schema/mule/core" expression="#[flowVars['response']=='true']" name="nonAuthorizedFilter"/>
+  		</mule:message-filter>
+
+    </before>
+
+    <!-- Pointcuts specify where this policy takes effect-->
+    <pointcut>
+       <api-platform-gw:api-pointcut apiName="{{ apiName }}" apiVersion="{{ apiVersionName }}"/>
+    </pointcut>
+</policy>

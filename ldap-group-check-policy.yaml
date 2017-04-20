@@ -1,0 +1,39 @@
+---
+id: ldap-group-check-policy
+name: ldap group check policy
+description: Check is the OAuth User is part of the authorized Group
+category: Security
+type: custom
+standalone: true
+requiresConnectivity: false
+providedCharacteristics:
+  - Check is the OAuth User is part of the authorized Group
+requiredCharacteristics: []
+configuration:
+    - propertyName: ldap_check_url
+      name: LDAP Check Endpoint
+      description: |
+        LDAP Check Endpoint
+      type: string
+      defaultValue:  
+      optional: false
+      sensitive: false
+      allowMultiple: false
+    - propertyName: authCode
+      name: HTTP Error Code for Non-Authorized Access
+      description: |
+        HTTP Error Code to be returned
+      type: int
+      defaultValue: 401
+      optional: false
+      sensitive: false
+      allowMultiple: false
+    - propertyName: authMsg
+      name: Error Message for Non-Authorized Access
+      description: |
+        Custom Error Message
+      type: string
+      defaultValue: "Not Authorized"
+      optional: false
+      sensitive: false
+      allowMultiple: false

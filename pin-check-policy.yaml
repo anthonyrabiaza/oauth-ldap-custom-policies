@@ -1,0 +1,78 @@
+---
+id: pin-policy
+name: Pin Check policy
+description: Check if the PIN of the caller is valid.
+category: Security
+type: custom
+standalone: true
+requiresConnectivity: false
+providedCharacteristics:
+  - Check the temporary PIN generated for this OAuth Token
+requiredCharacteristics: []
+configuration:
+    - propertyName: pin_check_url
+      name: PIN Check Endpoint
+      description: |
+        PIN Check Endpoint
+      type: string
+      defaultValue:
+      optional: false
+      sensitive: false
+      allowMultiple: false
+    - propertyName: authCode
+      name: HTTP Error Code for Wrong PIN
+      description: |
+        HTTP Error Code to be returned
+      type: int
+      defaultValue: 401
+      optional: false
+      sensitive: false
+      allowMultiple: false
+    - propertyName: authMsg
+      name: Error Message for Wrong PIN
+      description: |
+        Custom Error Message
+      type: string
+      defaultValue: "Wrong PIN"
+      optional: false
+      sensitive: false
+      allowMultiple: false
+ramlSnippet: |
+  The snippet below is a sample that informed that the endpoints required a PIN.
+
+  ```
+  traits:
+  - pin-required:
+      headers:
+        X-PIN:
+          type: string
+  ```
+
+  To enforce this security scheme the API definition must use the `is` RAML attribute as well.
+
+  ```
+  /products:
+  get:
+    is: [pin-required]
+    description: Gets a list of all the inventory products.
+
+  ```
+ramlV1Snippet: |
+  The snippet below is a sample that informed that the endpoints required a PIN.
+
+  ```
+  traits:
+  pin-required:
+      headers:
+        X-PIN:
+          type: string
+  ```
+
+  To enforce this security scheme the API definition must use the `is` RAML attribute as well.
+
+  ```
+  /products:
+  get:
+    is: [pin-required]
+    description: Gets a list of all the inventory products.
+  ```
